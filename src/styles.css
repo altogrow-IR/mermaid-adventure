@@ -1,0 +1,287 @@
+:root {
+  color: #18435c;
+  background: #b8ecff;
+  font-family:
+    "Hiragino Maru Gothic ProN",
+    "Yu Gothic",
+    "Meiryo",
+    system-ui,
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  touch-action: none;
+}
+
+.app-shell {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  background:
+    radial-gradient(circle at 24% 8%, rgba(255, 255, 255, 0.9), transparent 24%),
+    linear-gradient(180deg, #dff8ff 0%, #82d7f2 48%, #57b9df 100%);
+  position: relative;
+}
+
+.game-wrap {
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: min(100vh, calc(100vw * 9 / 16));
+  overflow: hidden;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(22, 83, 117, 0.24);
+}
+
+.game-wrap canvas {
+  display: block;
+}
+
+.error-fallback {
+  max-width: 680px;
+  margin: 24px;
+  padding: 24px;
+  border: 4px solid rgba(255, 255, 255, 0.74);
+  border-radius: 18px;
+  background: rgba(255, 250, 231, 0.92);
+  box-shadow: 0 14px 36px rgba(21, 90, 124, 0.18);
+  text-align: center;
+}
+
+.error-fallback h1 {
+  margin: 0 0 12px;
+  font-size: 28px;
+}
+
+.error-fallback p {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.overlay-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(30, 126, 171, 0.42);
+}
+
+.overlay-card {
+  width: min(96vw, 920px);
+  max-height: min(92vh, 680px);
+  overflow: auto;
+  padding: 24px;
+  border: 6px solid rgba(255, 255, 255, 0.88);
+  border-radius: 24px;
+  background: rgba(255, 248, 226, 0.97);
+  box-shadow: 0 18px 44px rgba(20, 83, 113, 0.28);
+}
+
+.overlay-card h1,
+.overlay-card h2 {
+  margin: 0;
+  color: #2c6ea4;
+  text-align: center;
+}
+
+.overlay-card h1 {
+  margin-bottom: 18px;
+  font-size: 44px;
+}
+
+.overlay-card h2 {
+  margin: 14px 0 10px;
+  font-size: 26px;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.choice-grid.compact {
+  gap: 10px;
+}
+
+.choice-button {
+  display: grid;
+  min-height: 112px;
+  place-items: center;
+  padding: 12px;
+  border: 5px solid #ffffff;
+  border-radius: 18px;
+  background: #dff8ff;
+  color: #4c3a48;
+  font: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  box-shadow: 0 8px 0 rgba(83, 147, 169, 0.2);
+}
+
+.choice-button:disabled {
+  opacity: 0.54;
+}
+
+.choice-button.is-selected {
+  border-color: #ffd85c;
+  background: #fff2ad;
+  box-shadow: 0 0 0 6px rgba(255, 216, 92, 0.35);
+}
+
+.choice-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.overlay-actions {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.primary-button,
+.soft-button {
+  min-width: 178px;
+  min-height: 72px;
+  border: 5px solid #ffffff;
+  border-radius: 26px;
+  color: #ffffff;
+  font: inherit;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.primary-button {
+  background: #5fc989;
+}
+
+.soft-button {
+  background: #9b91d9;
+}
+
+.audio-card {
+  width: min(94vw, 560px);
+}
+
+.audio-setting-row,
+.volume-control {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+  color: #4c3a48;
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.audio-setting-row {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.toggle-button {
+  min-width: 168px;
+  min-height: 76px;
+  border: 5px solid #ffffff;
+  border-radius: 26px;
+  background: #9b91d9;
+  color: #ffffff;
+  font: inherit;
+  font-size: 30px;
+  font-weight: 900;
+  box-shadow: 0 8px 0 rgba(83, 147, 169, 0.2);
+}
+
+.toggle-button.is-on {
+  background: #5fc989;
+}
+
+.volume-control input {
+  width: 100%;
+  min-height: 56px;
+  accent-color: #5fc989;
+}
+
+.volume-control strong {
+  color: #2c6ea4;
+  font-size: 26px;
+  text-align: center;
+}
+
+.dress-up-card {
+  width: min(96vw, 1040px);
+}
+
+.mermaid-preview {
+  display: grid;
+  min-height: 132px;
+  place-items: center;
+  margin-bottom: 10px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #bfefff, #77d2ef);
+  color: #ffffff;
+  font-weight: 800;
+  position: relative;
+}
+
+.preview-tiara {
+  position: absolute;
+  top: 12px;
+  font-size: 38px;
+  color: #ffe173;
+}
+
+.preview-face {
+  font-size: 72px;
+}
+
+.preview-tail {
+  position: absolute;
+  right: 34%;
+  bottom: 16px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #68d7d4;
+  font-size: 18px;
+}
+
+.preview-tail.tail-pink {
+  background: #ff8fb6;
+}
+
+.preview-tail.tail-purple {
+  background: #9d8df1;
+}
+
+@media (max-width: 760px) {
+  .overlay-card {
+    padding: 16px;
+  }
+
+  .choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .choice-button {
+    min-height: 84px;
+  }
+}
