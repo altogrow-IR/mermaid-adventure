@@ -55,10 +55,16 @@ export class UIScene extends Phaser.Scene {
   }
 
   private createMenuButtons() {
-    this.createRoundButton(GAME_WIDTH - 238, 56, 'BGM', 'sparkle', () => {
+    this.createRoundButton(GAME_WIDTH - 352, 56, 'おみせ', 'treasure', () => {
+      window.dispatchEvent(new Event('mermaid:open-shop'));
+    });
+    this.createRoundButton(GAME_WIDTH - 238, 56, 'うみ', 'sparkle', () => {
+      window.dispatchEvent(new Event('mermaid:open-stage-select'));
+    });
+    this.createRoundButton(GAME_WIDTH - 124, 56, 'BGM', 'sparkle', () => {
       window.dispatchEvent(new Event('mermaid:open-audio-settings'));
     });
-    this.createRoundButton(GAME_WIDTH - 124, 56, 'なかま', 'fish-clownfish', () => {
+    this.createRoundButton(GAME_WIDTH - 124, 166, 'なかま', 'fish-clownfish', () => {
       window.dispatchEvent(new Event('mermaid:open-companion'));
     });
   }

@@ -20,8 +20,17 @@ export class TitleScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       window.removeEventListener('mermaid:audio-settings-changed', this.handleAudioSettingsChanged);
     });
-    this.createButton(GAME_WIDTH / 2, 440, 'はじめる', 0xff7fa0, () => this.startGame(false));
-    this.createButton(GAME_WIDTH / 2, 540, 'つづきから', 0x74c779, () => this.startGame(true));
+    this.createButton(GAME_WIDTH / 2, 420, 'はじめる', 0xff7fa0, () => this.startGame(false));
+    this.createButton(GAME_WIDTH / 2, 510, 'つづきから', 0x74c779, () => this.startGame(true));
+    this.createButton(GAME_WIDTH / 2 - 190, 610, 'おみせ', 0x9b91d9, () => window.dispatchEvent(new Event('mermaid:open-shop')), 300);
+    this.createButton(
+      GAME_WIDTH / 2 + 190,
+      610,
+      'うみをえらぶ',
+      0x4fb8d8,
+      () => window.dispatchEvent(new Event('mermaid:open-stage-select')),
+      300,
+    );
   }
 
   update(time: number, delta: number) {
@@ -124,13 +133,13 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
   }
 
-  private createButton(x: number, y: number, label: string, color: number, onClick: () => void) {
+  private createButton(x: number, y: number, label: string, color: number, onClick: () => void, width = 350) {
     const button = this.add.container(x, y);
     const body = this.add.graphics();
     body.fillStyle(color, 1);
     body.lineStyle(5, 0xffffff, 0.95);
-    body.fillRoundedRect(-175, -42, 350, 84, 34);
-    body.strokeRoundedRect(-175, -42, 350, 84, 34);
+    body.fillRoundedRect(-width / 2, -42, width, 84, 34);
+    body.strokeRoundedRect(-width / 2, -42, width, 84, 34);
 
     const text = this.add
       .text(0, 0, label, {
@@ -141,7 +150,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     button.add([body, text]);
-    button.setSize(350, 84);
+    button.setSize(width, 84);
     button.setInteractive({ useHandCursor: true });
     button.on('pointerdown', () => {
       this.tweens.add({

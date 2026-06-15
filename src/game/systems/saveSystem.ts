@@ -1,6 +1,7 @@
 import { companionFishCatalog, type CompanionFishId } from '../../types/companionFish';
 import { defaultDressUpState, initialDressUpItemIds } from '../../types/dressUp';
 import type { SaveData } from '../../types/saveData';
+import { ALL_SHOP_ITEMS, castleIds, stageIds, type CastleId, type StageId } from '../../types/shop';
 import { DEFAULT_AUDIO_SETTINGS } from '../audio/audioSettings';
 
 export const SAVE_DATA_KEY = 'mermaid-save-data';
@@ -20,6 +21,9 @@ export const defaultSaveData: SaveData = {
   unlockedDressUpItemIds: [...initialDressUpItemIds],
   openedTreasureIds: [],
   audioSettings: { ...DEFAULT_AUDIO_SETTINGS },
+  purchasedItemIds: [],
+  selectedStageId: 'stage_default',
+  selectedCastleId: 'none',
 };
 
 const companionFishIds = new Set<CompanionFishId>(companionFishCatalog.map((fish) => fish.id));
@@ -34,6 +38,9 @@ const dressUpItemIds = new Set([
   'tiara-pearl',
   'tiara-star',
 ]);
+const shopItemIds = new Set(ALL_SHOP_ITEMS.map((item) => item.id));
+const selectableStageIds = new Set<StageId>(stageIds);
+const selectableCastleIds = new Set<CastleId>(castleIds);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -71,6 +78,28 @@ function validAudioSettings(value: unknown) {
   };
 }
 
+function validPurchasedItemIds(value: unknown) {
+  return unique(stringArray(value).filter((id) => shopItemIds.has(id)));
+}
+
+function validStageId(value: unknown, purchasedItemIds: string[]): StageId {
+  if (typeof value !== 'string' || !selectableStageIds.has(value as StageId)) {
+    return defaultSaveData.selectedStageId;
+  }
+
+  const stageId = value as StageId;
+  return stageId === 'stage_default' || purchasedItemIds.includes(stageId) ? stageId : defaultSaveData.selectedStageId;
+}
+
+function validCastleId(value: unknown, purchasedItemIds: string[]): CastleId {
+  if (typeof value !== 'string' || !selectableCastleIds.has(value as CastleId)) {
+    return defaultSaveData.selectedCastleId;
+  }
+
+  const castleId = value as CastleId;
+  return castleId === 'none' || purchasedItemIds.includes(castleId) ? castleId : defaultSaveData.selectedCastleId;
+}
+
 export function migrateSaveData(raw: unknown): SaveData {
   if (!isRecord(raw)) {
     return structuredClone(defaultSaveData);
@@ -80,6 +109,7 @@ export function migrateSaveData(raw: unknown): SaveData {
   const dressUpRaw = isRecord(raw.dressUp) ? raw.dressUp : {};
   const unlockedFish = unique(['clownfish', ...companionIds(companionRaw.unlockedIds)]);
   const selectedFish = unique(companionIds(companionRaw.selectedIds)).filter((id) => unlockedFish.includes(id)).slice(0, 3);
+  const purchasedItemIds = validPurchasedItemIds(raw.purchasedItemIds);
 
   return {
     collectedShells: numberOrZero(raw.collectedShells),
@@ -101,6 +131,9 @@ export function migrateSaveData(raw: unknown): SaveData {
     ),
     openedTreasureIds: stringArray(raw.openedTreasureIds),
     audioSettings: validAudioSettings(raw.audioSettings),
+    purchasedItemIds,
+    selectedStageId: validStageId(raw.selectedStageId, purchasedItemIds),
+    selectedCastleId: validCastleId(raw.selectedCastleId, purchasedItemIds),
   };
 }
 

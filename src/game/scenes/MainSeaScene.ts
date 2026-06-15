@@ -5,6 +5,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from '../createGameConfig';
 import { defaultSaveData, loadSaveData, saveSaveData } from '../../stores/saveData';
 import { grantNextReward } from '../systems/rewardSystem';
 import type { SaveData } from '../../types/saveData';
+import type { CastleId, StageId } from '../../types/shop';
 import type { UiUpdatePayload } from './UIScene';
 import { AudioManager } from '../audio/AudioManager';
 import type { AudioSettings } from '../audio/audioSettings';
@@ -25,6 +26,19 @@ const SEA_CASTLE_Y = 330;
 const SEA_CASTLE_WIDTH = 700;
 const SEA_CASTLE_HEIGHT = 550;
 const MOVE_BUTTON_Y_OFFSET = -56;
+
+const stageTextureKeys: Record<StageId, string> = {
+  stage_default: 'seaBackground',
+  stage_jellyfish_sea: 'stageJellyfishSea',
+  stage_rainbow_sea: 'stageRainbowSea',
+  stage_star_sea: 'stageStarSea',
+};
+
+const castleTextureKeys: Record<Exclude<CastleId, 'none'>, string> = {
+  castle_small: 'castleSmall',
+  castle_pearl: 'castlePearl',
+  castle_rainbow: 'castleRainbow',
+};
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 
@@ -74,6 +88,9 @@ export class MainSeaScene extends Phaser.Scene {
       : {
           ...structuredClone(defaultSaveData),
           audioSettings: currentSaveData.audioSettings,
+          purchasedItemIds: currentSaveData.purchasedItemIds,
+          selectedStageId: currentSaveData.selectedStageId,
+          selectedCastleId: currentSaveData.selectedCastleId,
         };
     this.updateQuestProgress();
     this.collectibles = [];
@@ -119,16 +136,18 @@ export class MainSeaScene extends Phaser.Scene {
   }
 
   private createBackground() {
-    if (this.textures.exists('seaBackground')) {
-      this.tileSeaBackground();
+    const selectedTextureKey = stageTextureKeys[this.saveData.selectedStageId] ?? 'seaBackground';
+    const textureKey = this.textures.exists(selectedTextureKey) ? selectedTextureKey : 'seaBackground';
+    if (this.textures.exists(textureKey)) {
+      this.tileSeaBackground(textureKey);
       return;
     }
 
     this.createFallbackOceanBackground();
   }
 
-  private tileSeaBackground() {
-    const texture = this.textures.get('seaBackground').getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+  private tileSeaBackground(textureKey: string) {
+    const texture = this.textures.get(textureKey).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
     const scale = Math.max(GAME_WIDTH / texture.width, GAME_HEIGHT / texture.height);
     const tileWidth = texture.width * scale;
     const tileHeight = texture.height * scale;
@@ -136,7 +155,7 @@ export class MainSeaScene extends Phaser.Scene {
 
     for (let i = 0; i < tileCount; i += 1) {
       this.add
-        .image(i * tileWidth, GAME_HEIGHT / 2, 'seaBackground')
+        .image(i * tileWidth, GAME_HEIGHT / 2, textureKey)
         .setOrigin(0, 0.5)
         .setDisplaySize(tileWidth + 1, tileHeight)
         .setDepth(-20);
@@ -183,6 +202,40 @@ export class MainSeaScene extends Phaser.Scene {
   }
 
   private createCastle() {
+    if (this.saveData.selectedCastleId === 'none') {
+      return;
+    }
+
+    const selectedCastleKey = castleTextureKeys[this.saveData.selectedCastleId];
+    if (this.textures.exists(selectedCastleKey)) {
+      this.add
+        .image(SEA_CASTLE_X, SEA_CASTLE_Y, selectedCastleKey)
+        .setDisplaySize(SEA_CASTLE_WIDTH, SEA_CASTLE_HEIGHT)
+        .setDepth(2)
+        .setAlpha(0.92);
+      return;
+    }
+
+    this.add
+      .text(SEA_CASTLE_X, SEA_CASTLE_Y - 190, 'うみの\nおしろ', {
+        fontSize: '34px',
+        color: '#eaf8ff',
+        fontStyle: 'bold',
+        align: 'center',
+      })
+      .setDepth(3)
+      .setAlpha(0.78);
+
+    const castle = this.add.graphics().setDepth(2).setAlpha(0.46);
+    castle.fillStyle(0xd7f4ff, 1);
+    castle.fillRoundedRect(SEA_CASTLE_X - 115, SEA_CASTLE_Y - 120, 230, 260, 22);
+    castle.fillTriangle(SEA_CASTLE_X - 115, SEA_CASTLE_Y - 120, SEA_CASTLE_X, SEA_CASTLE_Y - 218, SEA_CASTLE_X + 115, SEA_CASTLE_Y - 120);
+    castle.fillRoundedRect(SEA_CASTLE_X - 53, SEA_CASTLE_Y - 190, 82, 330, 18);
+    castle.fillTriangle(SEA_CASTLE_X - 53, SEA_CASTLE_Y - 190, SEA_CASTLE_X - 12, SEA_CASTLE_Y - 256, SEA_CASTLE_X + 29, SEA_CASTLE_Y - 190);
+  }
+
+  /*
+  private createCastleOld() {
     const hasSeaCastle = this.registry.get('hasSeaCastle') === true && this.textures.exists('seaCastle');
     if (hasSeaCastle) {
       this.add
@@ -210,6 +263,8 @@ export class MainSeaScene extends Phaser.Scene {
     castle.fillRoundedRect(4282, 140, 82, 330, 18);
     castle.fillTriangle(4282, 140, 4323, 74, 4364, 140);
   }
+
+  */
 
   private createMermaid() {
     this.mermaid = this.physics.add.image(210, 360, 'mermaid');
@@ -735,7 +790,14 @@ export class MainSeaScene extends Phaser.Scene {
 
   private handleSaveUpdated = (event: Event) => {
     const saveEvent = event as CustomEvent<SaveData>;
+    const needsSceneRefresh =
+      this.saveData.selectedStageId !== saveEvent.detail.selectedStageId ||
+      this.saveData.selectedCastleId !== saveEvent.detail.selectedCastleId;
     this.saveData = saveEvent.detail;
+    if (needsSceneRefresh) {
+      this.scene.restart({ continueGame: true });
+      return;
+    }
     this.companionFishManager?.setSelectedFish(this.saveData.companionFish.selectedIds);
     this.updateUi();
   };

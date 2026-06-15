@@ -13,7 +13,12 @@ import pearlImageUrl from '../../assets/images/shinju.png';
 import treasureImageUrl from '../../assets/images/takarabako.png';
 import { AUDIO_KEYS } from '../audio/audioKeys';
 
-const optionalImageUrls = import.meta.glob('../../assets/images/{kame,oshiro}.png', {
+const optionalImageUrls = import.meta.glob('../../assets/images/{kame,oshiro,castleSmall,castlePearl,castleRainbow}.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+const optionalStageBackgroundUrls = import.meta.glob('../../assets/images/backgrounds/{stage-jellyfish-sea,stage-rainbow-sea,stage-star-sea}.png', {
   eager: true,
   query: '?url',
   import: 'default',
@@ -21,6 +26,16 @@ const optionalImageUrls = import.meta.glob('../../assets/images/{kame,oshiro}.pn
 
 const turtleImageUrl = optionalImageUrls['../../assets/images/kame.png'];
 const seaCastleImageUrl = optionalImageUrls['../../assets/images/oshiro.png'];
+const castleImageUrls = {
+  castleSmall: optionalImageUrls['../../assets/images/castleSmall.png'],
+  castlePearl: optionalImageUrls['../../assets/images/castlePearl.png'],
+  castleRainbow: optionalImageUrls['../../assets/images/castleRainbow.png'],
+};
+const stageBackgrounds = {
+  stageJellyfishSea: optionalStageBackgroundUrls['../../assets/images/backgrounds/stage-jellyfish-sea.png'],
+  stageRainbowSea: optionalStageBackgroundUrls['../../assets/images/backgrounds/stage-rainbow-sea.png'],
+  stageStarSea: optionalStageBackgroundUrls['../../assets/images/backgrounds/stage-star-sea.png'],
+};
 const optionalAudioUrls = import.meta.glob('../../assets/audio/mermaid_underwater_bgm.{mp3,ogg,wav}', {
   eager: true,
   query: '?url',
@@ -44,12 +59,22 @@ export class BootScene extends Phaser.Scene {
     this.load.once('filecomplete-image-seaCastle', () => this.registry.set('hasSeaCastle', true));
 
     this.load.image('seaBackground', seaBackgroundImageUrl);
+    Object.entries(stageBackgrounds).forEach(([key, url]) => {
+      if (url) {
+        this.load.image(key, url);
+      }
+    });
     if (turtleImageUrl) {
       this.load.image('turtleImage', turtleImageUrl);
     }
     if (seaCastleImageUrl) {
       this.load.image('seaCastle', seaCastleImageUrl);
     }
+    Object.entries(castleImageUrls).forEach(([key, url]) => {
+      if (url) {
+        this.load.image(key, url);
+      }
+    });
     this.load.image('mermaid-source', mermaidImageUrl);
     this.load.image('fish-clownfish-source', clownFishImageUrl);
     this.load.image('fish-bluefish-source', blueFishImageUrl);
@@ -73,6 +98,7 @@ export class BootScene extends Phaser.Scene {
   create() {
     this.createCroppedImageTextures();
     this.createTextures();
+    this.createShopFallbackTextures();
     this.scene.start('TitleScene');
   }
 
@@ -306,5 +332,58 @@ export class BootScene extends Phaser.Scene {
     sparkle.fillTriangle(0, 18, 14, 14, 18, 0);
     sparkle.generateTexture('sparkle', 40, 40);
     sparkle.destroy();
+  }
+
+  private createShopFallbackTextures() {
+    this.createStageTexture('stageJellyfishSea', 0x5cc8e8, 0x735adf, 0xf7d7ff);
+    this.createStageTexture('stageRainbowSea', 0x76d7f1, 0xff8fb6, 0xffee8a);
+    this.createStageTexture('stageStarSea', 0x315aa4, 0x9d8df1, 0xfff1a6);
+    this.createCastleTexture('castleSmall', 0xd7f4ff, 0x75c7e5, 0xffffff);
+    this.createCastleTexture('castlePearl', 0xf8f2ff, 0xd9c8ff, 0xffffff);
+    this.createCastleTexture('castleRainbow', 0xfff0a6, 0xff8fb6, 0x8df1ee);
+  }
+
+  private createStageTexture(key: string, topColor: number, bottomColor: number, accentColor: number) {
+    if (this.textures.exists(key)) {
+      return;
+    }
+
+    const graphics = this.make.graphics({ x: 0, y: 0 });
+    graphics.fillGradientStyle(topColor, topColor, bottomColor, bottomColor, 1);
+    graphics.fillRect(0, 0, 1280, 720);
+    graphics.fillStyle(0xffffff, 0.16);
+    for (let i = 0; i < 9; i += 1) {
+      graphics.fillTriangle(80 + i * 150, 0, 150 + i * 150, 0, 30 + i * 150, 720);
+    }
+    graphics.fillStyle(accentColor, 0.38);
+    for (let i = 0; i < 24; i += 1) {
+      const x = 40 + ((i * 97) % 1200);
+      const y = 80 + ((i * 53) % 560);
+      graphics.fillCircle(x, y, 12 + (i % 4) * 4);
+    }
+    graphics.generateTexture(key, 1280, 720);
+    graphics.destroy();
+  }
+
+  private createCastleTexture(key: string, bodyColor: number, roofColor: number, accentColor: number) {
+    if (this.textures.exists(key)) {
+      return;
+    }
+
+    const graphics = this.make.graphics({ x: 0, y: 0 });
+    graphics.fillStyle(bodyColor, 1);
+    graphics.fillRoundedRect(145, 190, 230, 260, 26);
+    graphics.fillRoundedRect(215, 120, 110, 330, 24);
+    graphics.fillStyle(roofColor, 1);
+    graphics.fillTriangle(145, 190, 260, 70, 375, 190);
+    graphics.fillTriangle(215, 120, 270, 30, 325, 120);
+    graphics.fillStyle(accentColor, 0.92);
+    graphics.fillCircle(270, 250, 34);
+    graphics.fillRoundedRect(235, 345, 70, 105, 34);
+    graphics.lineStyle(8, 0xffffff, 0.7);
+    graphics.strokeRoundedRect(145, 190, 230, 260, 26);
+    graphics.strokeRoundedRect(215, 120, 110, 330, 24);
+    graphics.generateTexture(key, 520, 520);
+    graphics.destroy();
   }
 }

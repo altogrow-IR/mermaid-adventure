@@ -134,6 +134,66 @@ src/assets/images/oshiro.png
 1. 未解放の仲間魚
 2. キラキラポイント
 
+## おみせ
+
+タイトル画面とゲーム画面右上の `おみせ` から、キラキラポイントを使って買い物できます。
+
+- `あたらしい うみ`: 購入すると `うみをえらぶ` でステージ背景を切り替えられます。
+- `うみの おしろ`: 購入すると `おしろをえらぶ` で海ステージ内に飾れます。
+- 購入前には確認画面が出ます。
+- キラキラが足りない商品は、やさしいメッセージを表示して購入しません。
+- 購入済みの商品は `かったよ！` と表示され、再購入できません。
+
+商品データは `src/types/shop.ts` で管理しています。
+商品を増やす場合は、次の形式で `STAGE_SHOP_ITEMS` または `CASTLE_SHOP_ITEMS` に追加してください。
+
+```ts
+{
+  id: 'stage_example',
+  type: 'stage',
+  name: 'あたらしい うみ',
+  description: 'せつめい',
+  price: 300,
+  imageKey: 'stageExample',
+}
+```
+
+購入処理と選択処理は `src/game/systems/shopSystem.ts` にまとめています。
+
+## ステージ背景画像
+
+追加ステージの背景画像は、以下に置く想定です。
+
+```txt
+src/assets/images/backgrounds/stage-jellyfish-sea.png
+src/assets/images/backgrounds/stage-rainbow-sea.png
+src/assets/images/backgrounds/stage-star-sea.png
+```
+
+画像がない場合でも、`BootScene.ts` が仮のグラデーション背景を生成します。
+本番画像を追加したら、`BootScene.ts` の `stageBackgrounds` と `MainSeaScene.ts` の `stageTextureKeys` のキーを合わせてください。
+
+## おしろ画像
+
+おしろ画像は、以下のファイル名で `src/assets/images/` に置くと自動で読み込まれます。
+
+```txt
+src/assets/images/castleSmall.png
+src/assets/images/castlePearl.png
+src/assets/images/castleRainbow.png
+```
+
+画像がない場合でも、`BootScene.ts` で仮テクスチャを生成します。
+
+```txt
+castleSmall
+castlePearl
+castleRainbow
+```
+
+本番用のPNGへ差し替える場合は、同じファイル名で上書きしてください。
+`src/types/shop.ts` の `imageKey`、`src/components/shopPreviewAssets.ts`、`MainSeaScene.ts` の `castleTextureKeys` は同じキー名で揃えています。
+
 ## 保存データ
 
 localStorageのキー名は以下です。
@@ -144,6 +204,22 @@ mermaid-save-data
 
 保存内容は `src/types/saveData.ts` の `SaveData` で管理しています。
 既存データを消さないように、`src/game/systems/saveSystem.ts` の `migrateSaveData` で不足項目を補完します。
+
+おみせ機能で追加された保存項目:
+
+- `purchasedItemIds`: 購入済みの商品ID
+- `selectedStageId`: 選択中の海ステージID
+- `selectedCastleId`: 選択中のおしろID
+
+既存のlocalStorageにこれらの項目がない場合は、次の初期値で補完されます。
+
+```ts
+{
+  purchasedItemIds: [],
+  selectedStageId: 'stage_default',
+  selectedCastleId: 'none',
+}
+```
 
 ## 素材差し替え方法
 

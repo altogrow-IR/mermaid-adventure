@@ -1,5 +1,6 @@
 import type { CompanionFishId } from './companionFish';
 import type { DressUpState } from './dressUp';
+import type { CastleId, StageId } from './shop';
 import type { AudioSettings } from '../game/audio/audioSettings';
 
 export type SaveData = {
@@ -16,4 +17,7 @@ export type SaveData = {
   unlockedDressUpItemIds: string[];
   openedTreasureIds: string[];
   audioSettings: AudioSettings;
+  purchasedItemIds: string[];
+  selectedStageId: StageId;
+  selectedCastleId: CastleId;
 };
