@@ -5,6 +5,9 @@ import type { SaveData } from '../../types/saveData';
 export type UiUpdatePayload = SaveData & {
   questShells: number;
   questDone: boolean;
+  questCount: number;
+  questNumber: number;
+  questTarget: number;
 };
 
 export class UIScene extends Phaser.Scene {
@@ -33,7 +36,9 @@ export class UIScene extends Phaser.Scene {
     this.pearlText = this.add.text(116, 54, `${data.collectedPearls}`, this.counterTextStyle()).setOrigin(0, 0.5);
 
     this.createCounter(228, 18, 'pink-shell', 'かいがら');
-    this.shellText = this.add.text(320, 54, `${data.questShells} / 3`, this.counterTextStyle()).setOrigin(0, 0.5);
+    this.shellText = this.add
+      .text(320, 54, `${data.questShells} / ${data.questTarget}`, this.counterTextStyle())
+      .setOrigin(0, 0.5);
 
     this.createCounter(GAME_WIDTH / 2 - 132, 18, 'sparkle', 'キラキラ');
     this.sparkleText = this.add.text(GAME_WIDTH / 2 - 18, 54, `${data.sparklePoint}`, this.counterTextStyle()).setOrigin(0, 0.5);
@@ -94,13 +99,15 @@ export class UIScene extends Phaser.Scene {
     }
 
     this.questText.setText(
-      data.questDone ? 'おねがい\nありがとう！' : `おねがい\nピンクのかいがら\n${data.questShells} / 3`,
+      data.questDone
+        ? 'おねがい\nぜんぶ ありがとう！'
+        : `おねがい ${data.questNumber} / ${data.questCount}\nかいがら\n${data.questShells} / ${data.questTarget}`,
     );
   }
 
   private updateUi(data: UiUpdatePayload) {
     this.pearlText?.setText(`${data.collectedPearls}`);
-    this.shellText?.setText(`${data.questShells} / 3`);
+    this.shellText?.setText(`${data.questShells} / ${data.questTarget}`);
     this.sparkleText?.setText(`${data.sparklePoint}`);
     this.updateQuest(data);
   }

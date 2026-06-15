@@ -9,20 +9,22 @@ import type { UiUpdatePayload } from './UIScene';
 import { AudioManager } from '../audio/AudioManager';
 import type { AudioSettings } from '../audio/audioSettings';
 
-const WORLD_WIDTH = 5120;
-const QUEST_ID = 'pink-shells-for-turtle';
+const WORLD_WIDTH = 15360;
+const LEGACY_QUEST_ID = 'pink-shells-for-turtle';
+const QUEST_ID_PREFIX = 'pink-shells-for-turtle';
+const QUEST_COUNT = 10;
 const QUEST_TARGET = 3;
-const TREASURE_ID = 'first-sea-treasure';
 const MOVE_SPEED = 355;
 const MOVE_MIN_Y = 138;
 const MOVE_MAX_Y = 612;
 const ITEM_PICKUP_RADIUS = 120;
 const TREASURE_PICKUP_RADIUS = 150;
 const NPC_TALK_RADIUS = 360;
-const SEA_CASTLE_X = 4300;
+const SEA_CASTLE_X = 13040;
 const SEA_CASTLE_Y = 330;
 const SEA_CASTLE_WIDTH = 700;
 const SEA_CASTLE_HEIGHT = 550;
+const MOVE_BUTTON_Y_OFFSET = -56;
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 
@@ -57,7 +59,7 @@ export class MainSeaScene extends Phaser.Scene {
   private questShells = 0;
   private questDone = false;
   private turtle?: Phaser.Physics.Arcade.Image;
-  private treasure?: Phaser.Physics.Arcade.Image;
+  private treasures: { id: string; image: Phaser.Physics.Arcade.Image }[] = [];
   private dialogText?: Phaser.GameObjects.Text;
   private toastText?: Phaser.GameObjects.Text;
 
@@ -73,9 +75,9 @@ export class MainSeaScene extends Phaser.Scene {
           ...structuredClone(defaultSaveData),
           audioSettings: currentSaveData.audioSettings,
         };
-    this.questShells = Math.min(QUEST_TARGET, this.saveData.collectedShells);
-    this.questDone = this.saveData.clearedQuestIds.includes(QUEST_ID);
+    this.updateQuestProgress();
     this.collectibles = [];
+    this.treasures = [];
     this.touchInput = { up: false, down: false, left: false, right: false };
   }
 
@@ -171,7 +173,7 @@ export class MainSeaScene extends Phaser.Scene {
 
     this.createCastle();
 
-    for (let i = 0; i < 30; i += 1) {
+    for (let i = 0; i < 90; i += 1) {
       this.add
         .image(Phaser.Math.Between(80, WORLD_WIDTH - 80), Phaser.Math.Between(125, 560), 'fish')
         .setScale(Phaser.Math.FloatBetween(0.5, 0.95))
@@ -231,14 +233,28 @@ export class MainSeaScene extends Phaser.Scene {
   }
 
   private createTreasure() {
-    if (this.saveData.openedTreasureIds.includes(TREASURE_ID)) {
-      return;
-    }
+    const treasurePositions = [
+      [3900, 494],
+      [5850, 306],
+      [7350, 526],
+      [9200, 368],
+      [10980, 512],
+      [12640, 344],
+      [14320, 502],
+    ];
 
-    this.treasure = this.physics.add.image(3900, 494, 'treasure');
-    this.treasure.setImmovable(true);
-    this.treasure.setDepth(10);
-    this.treasure.setDisplaySize(150, 115);
+    treasurePositions.forEach(([x, y], index) => {
+      const id = `sea-treasure-${index + 1}`;
+      if (this.saveData.openedTreasureIds.includes(id)) {
+        return;
+      }
+
+      const image = this.physics.add.image(x, y, 'treasure');
+      image.setImmovable(true);
+      image.setDepth(10);
+      image.setDisplaySize(150, 115);
+      this.treasures.push({ id, image });
+    });
   }
 
   private createCollectibles() {
@@ -249,6 +265,30 @@ export class MainSeaScene extends Phaser.Scene {
       [2540, 280],
       [3420, 522],
       [4540, 390],
+      [5320, 512],
+      [6040, 274],
+      [6820, 452],
+      [7480, 330],
+      [8160, 538],
+      [8920, 292],
+      [9580, 466],
+      [10360, 348],
+      [11120, 520],
+      [11840, 304],
+      [12520, 448],
+      [13280, 272],
+      [14020, 510],
+      [14840, 386],
+      [5800, 548],
+      [6520, 356],
+      [7240, 246],
+      [9880, 540],
+      [10680, 262],
+      [11560, 452],
+      [12160, 560],
+      [13660, 404],
+      [14460, 298],
+      [15120, 520],
     ];
     const pearlPositions = [
       [780, 540],
@@ -256,6 +296,20 @@ export class MainSeaScene extends Phaser.Scene {
       [2200, 452],
       [3100, 330],
       [4300, 528],
+      [5020, 302],
+      [5700, 446],
+      [6440, 536],
+      [7180, 294],
+      [8020, 420],
+      [8840, 552],
+      [9660, 276],
+      [10480, 502],
+      [11260, 338],
+      [12020, 540],
+      [12880, 290],
+      [13720, 472],
+      [14580, 344],
+      [15220, 528],
     ];
 
     shellPositions.forEach(([x, y]) => this.addCollectible(x, y, 'shell'));
@@ -276,10 +330,10 @@ export class MainSeaScene extends Phaser.Scene {
       right: Phaser.Input.Keyboard.KeyCodes.D,
     }) as WasdKeys | undefined;
 
-    this.createMoveButton(168, 500, '↑', 'up');
-    this.createMoveButton(168, 640, '↓', 'down');
-    this.createMoveButton(88, 608, '←', 'left');
-    this.createMoveButton(248, 608, '→', 'right');
+    this.createMoveButton(168, 500 + MOVE_BUTTON_Y_OFFSET, '↑', 'up');
+    this.createMoveButton(168, 640 + MOVE_BUTTON_Y_OFFSET, '↓', 'down');
+    this.createMoveButton(88, 608 + MOVE_BUTTON_Y_OFFSET, '←', 'left');
+    this.createMoveButton(248, 608 + MOVE_BUTTON_Y_OFFSET, '→', 'right');
   }
 
   private createMoveButton(x: number, y: number, label: string, direction: Direction) {
@@ -363,6 +417,7 @@ export class MainSeaScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(65);
+    this.dialogText.setText(this.getQuestDialogText());
     this.dialogText.setStroke('#ffffff', 4);
   }
 
@@ -454,12 +509,16 @@ export class MainSeaScene extends Phaser.Scene {
       }
     });
 
-    if (this.treasure?.active) {
-      const distance = Phaser.Math.Distance.Between(this.mermaid.x, this.mermaid.y, this.treasure.x, this.treasure.y);
-      if (distance <= TREASURE_PICKUP_RADIUS) {
-        this.collectTreasure();
+    this.treasures.forEach((treasure) => {
+      if (!treasure.image.active) {
+        return;
       }
-    }
+
+      const distance = Phaser.Math.Distance.Between(this.mermaid!.x, this.mermaid!.y, treasure.image.x, treasure.image.y);
+      if (distance <= TREASURE_PICKUP_RADIUS) {
+        this.collectTreasure(treasure);
+      }
+    });
   }
 
   private collectItem(item: Collectible) {
@@ -473,7 +532,7 @@ export class MainSeaScene extends Phaser.Scene {
 
     if (item.kind === 'shell') {
       this.saveData.collectedShells += 1;
-      this.questShells = Math.min(QUEST_TARGET, this.saveData.collectedShells);
+      this.updateQuestProgress();
       this.saveData.sparklePoint += 10;
     } else {
       this.saveData.collectedPearls += 1;
@@ -485,15 +544,15 @@ export class MainSeaScene extends Phaser.Scene {
     this.persistAndUpdateUi();
   }
 
-  private collectTreasure() {
-    if (!this.treasure || this.saveData.openedTreasureIds.includes(TREASURE_ID)) {
+  private collectTreasure(treasure: { id: string; image: Phaser.Physics.Arcade.Image }) {
+    if (!treasure.image.active || this.saveData.openedTreasureIds.includes(treasure.id)) {
       return;
     }
 
-    const x = this.treasure.x;
-    const y = this.treasure.y;
-    this.treasure.disableBody(true, true);
-    this.saveData.openedTreasureIds = [...this.saveData.openedTreasureIds, TREASURE_ID];
+    const x = treasure.image.x;
+    const y = treasure.image.y;
+    treasure.image.disableBody(true, true);
+    this.saveData.openedTreasureIds = [...this.saveData.openedTreasureIds, treasure.id];
     const reward = grantNextReward(this.saveData);
     this.sparkleEmitter?.explode(42, x, y);
     this.bubbleEmitter?.explode(18, x, y);
@@ -537,11 +596,42 @@ export class MainSeaScene extends Phaser.Scene {
       return;
     }
 
-    this.questDone = true;
-    this.saveData.clearedQuestIds = Array.from(new Set([...this.saveData.clearedQuestIds, QUEST_ID]));
+    const questId = this.getCurrentQuestId();
+    if (!questId) {
+      this.updateQuestProgress();
+      return;
+    }
+
+    this.saveData.clearedQuestIds = Array.from(new Set([...this.saveData.clearedQuestIds, questId]));
+    this.updateQuestProgress();
     this.saveData.sparklePoint += 50;
     const reward = grantNextReward(this.saveData);
     this.showClearMessage(reward.message);
+  }
+
+  private updateQuestProgress() {
+    const completedCount = this.getCompletedQuestCount();
+    this.questShells = Math.min(QUEST_TARGET, Math.max(0, this.saveData.collectedShells - completedCount * QUEST_TARGET));
+    this.questDone = completedCount >= QUEST_COUNT;
+  }
+
+  private getCompletedQuestCount() {
+    const legacyCompletedCount = this.saveData.clearedQuestIds.includes(LEGACY_QUEST_ID) ? 1 : 0;
+    const startQuestNumber = legacyCompletedCount > 0 ? 2 : 1;
+    const modernCompletedCount = Array.from({ length: QUEST_COUNT - startQuestNumber + 1 }, (_, index) =>
+      this.saveData.clearedQuestIds.includes(this.getQuestId(startQuestNumber + index)),
+    ).filter(Boolean).length;
+
+    return Math.min(QUEST_COUNT, legacyCompletedCount + modernCompletedCount);
+  }
+
+  private getCurrentQuestId() {
+    const nextQuestNumber = this.getCompletedQuestCount() + 1;
+    return nextQuestNumber <= QUEST_COUNT ? this.getQuestId(nextQuestNumber) : undefined;
+  }
+
+  private getQuestId(questNumber: number) {
+    return `${QUEST_ID_PREFIX}-${questNumber}`;
   }
 
   private showClearMessage(rewardMessage: string) {
@@ -605,6 +695,15 @@ export class MainSeaScene extends Phaser.Scene {
     this.dialogText.setText(
       this.questDone ? 'ありがとう！\nとっても\nうれしいよ♪' : 'ピンクの\nかいがらを 3こ\nもってきてほしいな♪',
     );
+    this.dialogText.setText(this.getQuestDialogText());
+  }
+
+  private getQuestDialogText() {
+    if (this.questDone) {
+      return 'ありがとう！\nぜんぶの おねがい\nたすかったよ';
+    }
+
+    return `おねがい ${this.getCompletedQuestCount() + 1} / ${QUEST_COUNT}\nかいがらを ${QUEST_TARGET}こ\nもってきてね`;
   }
 
   private showToast(message: string) {
@@ -654,6 +753,9 @@ export class MainSeaScene extends Phaser.Scene {
       ...this.saveData,
       questShells: this.questShells,
       questDone: this.questDone,
+      questCount: QUEST_COUNT,
+      questNumber: Math.min(QUEST_COUNT, this.getCompletedQuestCount() + 1),
+      questTarget: QUEST_TARGET,
     };
   }
 }
